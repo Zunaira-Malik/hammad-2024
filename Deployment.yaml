@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: larksuite
+  labels:
+    app: larksuite
+spec:
+  replicas: 3  # Number of pod replicas
+  selector:
+    matchLabels:
+      app: larksuite
+  template:
+    metadata:
+      labels:
+        app: larksuite
+    spec:
+      containers:
+      - name: larksuite-container
+        image: hammad2024/larksuite:latest  # Docker Hub image
+        ports:
+        - containerPort: 8000  # Port application listens on
+        env:
+        - name: ENVIRONMENT
+          value: "production"  # environment variable
+        resources:
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: larksuite-service
+spec:
+  type: NodePort  
+  ports:
+  - port: 8000
+    targetPort: 8000
+    nodePort: 30007
+  selector:
+    app: larksuite
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: larksuite-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+  - host: larksuite.local  # Hostname to access the app locally
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: larksuite-service
+            port:
+              number: 8000
+
